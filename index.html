@@ -6,27 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       font-family: Arial, Helvetica, sans-serif;
-      color: #ff3333;
-      text-align: center;
-      overflow: hidden;
-      min-height: 100vh;
+      color: #ff3333; text-align: center;
+      overflow: hidden; min-height: 100vh;
       background: radial-gradient(ellipse at top, #1a1a1a, #0d0d0d 40%, #000000 80%);
-      background-size: cover;
-      background-position: center;
+      background-size: cover; background-position: center;
     }
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1; }
     .content { position: relative; z-index: 2; padding-top: 14vh; }
     h1 {
       font-size: clamp(28px, 6vw, 56px);
-      font-weight: 800;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
       animation: glitch 2s infinite;
-      transition: opacity 3s ease, filter 3s ease;
-      margin: 0 16px 12px;
+      transition: opacity 3s ease, filter 3s ease; margin: 0 16px 12px;
     }
     p { font-size: clamp(14px, 2.6vw, 22px); margin: 0 16px; transition: opacity 3s ease, filter 3s ease; }
     .fade-out { opacity: 0; filter: blur(5px); }
@@ -54,6 +47,14 @@
       z-index: 3; letter-spacing: 1px;
     }
     audio { display: none; }
+    #soundGate {
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,0.65); color:#ff3333; z-index:9999; font-family:Arial, sans-serif;
+    }
+    #soundGate div { text-align:center; }
+    #soundBtn {
+      padding:10px 18px; border:1px solid #ff3333; background:transparent; color:#ff3333; cursor:pointer;
+    }
   </style>
 </head>
 <body>
@@ -66,20 +67,27 @@
   <img class="character" src="silhouette.png" alt="Survivor silhouette">
   <div id="final-message">404: Memory Not Found</div>
 
-  <audio autoplay loop>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+  <!-- BGM 音频，初始静音 -->
+  <audio id="bgm" autoplay loop muted playsinline>
+    <source src="bgm.mp3" type="audio/mpeg">
   </audio>
+
+  <!-- 声音解锁提示层 -->
+  <div id="soundGate">
+    <div>
+      <div style="font-size:22px; margin-bottom:10px;">Enable Sound</div>
+      <div style="font-size:14px; opacity:.85; margin-bottom:16px;">Tap / Click to start audio</div>
+      <button id="soundBtn">Allow</button>
+    </div>
+  </div>
 
   <script>
     function triggerFadeOut() {
       const t = document.getElementById('title');
       const g = document.getElementById('tagline');
       if (!t.classList.contains('fade-out')) {
-        t.classList.add('fade-out');
-        g.classList.add('fade-out');
-        setTimeout(() => {
-          document.getElementById('final-message').style.display = 'block';
-        }, 3800);
+        t.classList.add('fade-out'); g.classList.add('fade-out');
+        setTimeout(() => { document.getElementById('final-message').style.display = 'block'; }, 3800);
       }
     }
     setTimeout(triggerFadeOut, 7000);
@@ -87,14 +95,31 @@
 
     function createBinary() {
       const el = document.createElement('div');
-      el.className = 'binary';
-      el.textContent = Math.random() > 0.5 ? '0' : '1';
+      el.className = 'binary'; el.textContent = Math.random() > 0.5 ? '0' : '1';
       el.style.left = Math.random() * window.innerWidth + 'px';
       el.style.animationDuration = (2 + Math.random() * 4) + 's';
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 6500);
     }
     setInterval(createBinary, 110);
+
+    // 声音解锁逻辑
+    const gate = document.getElementById('soundGate');
+    const btn  = document.getElementById('soundBtn');
+    const bgm  = document.getElementById('bgm');
+
+    async function enableAudio() {
+      try {
+        bgm.muted = false;
+        await bgm.play();
+      } catch(e) { setTimeout(()=> bgm.play().catch(()=>{}), 100); }
+      gate.style.display = 'none';
+      document.removeEventListener('pointerdown', enableAudio);
+      document.removeEventListener('keydown', enableAudio);
+    }
+    btn.addEventListener('click', enableAudio);
+    document.addEventListener('pointerdown', enableAudio, { once:true });
+    document.addEventListener('keydown', enableAudio, { once:true });
   </script>
 </body>
 </html>
